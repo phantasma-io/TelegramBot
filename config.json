@@ -1,0 +1,10 @@
+{
+  "botToken": "12345",
+  "botMimetypes": "audio/mp3,video/mp4,video/mpeg,image/gif",
+  "botFilenames": "mp3,mpeg,mp4,gif",
+  "admins": [1],
+  "chatsToWatch": [2, 1],
+  "verificationChat": 1,
+  "methods": ["deleteSpam", "info"],
+  "promo": "Promo"
+}
