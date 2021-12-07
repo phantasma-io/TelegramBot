@@ -6,16 +6,28 @@ import javax.persistence.GenerationType
 import javax.persistence.Id
 
 @Entity
-class TGUser (@Id @GeneratedValue(strategy = GenerationType.AUTO) var userId: Long = 0L,
-                                    var count: Int = 0,
-                                    var trusted: Boolean = false)
+open class TGUser (@Id open var userId: Long = 0L,
+                   open var count: Int = 0,
+                   open var trusted: Boolean = false){
+    override fun toString(): String {
+        return "TGUser(userId=$userId, count=$count, trusted=$trusted)"
+    }
+}
 
 @Entity
-class Feedback (@Id @GeneratedValue(strategy = GenerationType.AUTO) var feedbackId: Long = 0L,
-                var userId: Long = 0L,
-                var chatId: Long = 0L,
-                var data: String = "")
+open class Feedback (@Id @GeneratedValue(strategy = GenerationType.AUTO) open var feedbackId: Long = 0L,
+                open var userId: Long = 0L,
+                open var chatId: Long = 0L,
+                open var data: String = ""){
+    override fun toString(): String {
+        return "Feedback(feedbackId=$feedbackId, userId=$userId, chatId=$chatId, data='$data')"
+    }
+}
 
 @Entity
-class Blacklist (@Id @GeneratedValue(strategy = GenerationType.AUTO) var blackListId: Long = 0L,
-                 var hash: String = "")
+open class Blacklist (@Id @GeneratedValue(strategy = GenerationType.AUTO) open var blackListId: Long = 0L,
+                 open var hash: String = ""){
+    override fun toString(): String {
+        return "Blacklist(blackListId=$blackListId, hash='$hash')"
+    }
+}

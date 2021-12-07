@@ -5,6 +5,7 @@ import com.github.kotlintelegrambot.bot
 import com.github.kotlintelegrambot.dispatch
 import com.github.kotlintelegrambot.dispatcher.message
 import com.github.kotlintelegrambot.entities.ChatId
+import com.github.kotlintelegrambot.entities.ChatPermissions
 import com.github.kotlintelegrambot.entities.InlineKeyboardMarkup
 import com.github.kotlintelegrambot.entities.Message
 import com.github.kotlintelegrambot.entities.keyboard.InlineKeyboardButton
@@ -13,9 +14,11 @@ import de.y3om11.sparky.application.model.BotConfiguration
 import de.y3om11.sparky.repository.*
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
+import java.lang.String.format
 import java.security.MessageDigest
 import java.time.Instant
 import java.util.stream.Collectors
+import kotlin.math.log
 
 @Component
 class BotModes(
@@ -35,6 +38,9 @@ class BotModes(
             message(hasPromoCommand()) {
                 handlePromoCommand(bot, message)
             }
+            message(hasNextCommand()) {
+                handleNextCommand(bot, message)
+            }
             message(hasLinks()) {
                 handleNotWhitelistedLinks(bot, message)
             }
@@ -45,22 +51,36 @@ class BotModes(
                 handleNotWhitelistedPhoto(bot, message)
             }
             message(forwardedMessageToWhitelist()) {
-                handleWhitelistUser(bot, message)
+                handleWhitelistUser(message)
+            }
+            message(hasWarnCommand()) {
+                handleWarnCommand(bot, message)
+            }
+            message(hasForgiveCommand()) {
+                handleForgiveCommand(bot, message)
+            }
+            message(hasMuteOneMinuteCommand()) {
+                handleMuteOneMinuteCommand(bot, message)
+            }
+            message(hasMuteOneDayCommand()) {
+                handleMuteOneDayCommand(bot, message)
+            }
+            message(hasMuteTwoDaysCommand()) {
+                handleMuteTwoDaysCommand(bot, message)
+            }
+            message(hasUnmuteCommand()) {
+                handleUnmuteCommand(bot, message)
+            }
+            message(hasBanCommand()) {
+                handleBanCommand(bot, message)
+            }
+            message(hasUnbanCommand()) {
+                handleUnbanCommand(bot, message)
+            }
+            message(hasTrustCommand()) {
+                handleTrustCommand(message)
             }
         }
-    }
-
-    private fun handleWhitelistUser(bot: Bot, message: Message) {
-        val userIdToWhitelist = message.forwardFrom?.id ?: 0L
-        userRepository.findById(userIdToWhitelist)
-            .ifPresentOrElse(
-                {
-                    logger.info("User {} already present - ignore insert", userIdToWhitelist)},
-                {
-                    userRepository.save(TGUser(userIdToWhitelist, 0, true))
-                    logger.info("Whitelisted User {}", userIdToWhitelist)
-                }
-            )
     }
 
     fun hasPhoto(): Filter {
@@ -80,6 +100,65 @@ class BotModes(
             .and(f.isPromoCommand)
     }
 
+    fun hasNextCommand(): Filter {
+        return f.isTargetChat
+            .and(f.isNextCommand)
+    }
+
+    fun hasWarnCommand(): Filter {
+        return f.isTargetChat
+            .and(f.isAdmin)
+            .and(f.isWarnCommand)
+    }
+
+    fun hasForgiveCommand(): Filter {
+        return f.isTargetChat
+            .and(f.isAdmin)
+            .and(f.isForgiveCommand)
+    }
+
+    fun hasMuteOneMinuteCommand(): Filter {
+        return f.isTargetChat
+            .and(f.isAdmin)
+            .and(f.isMuteOneMinuteCommand)
+    }
+
+    fun hasMuteOneDayCommand(): Filter {
+        return f.isTargetChat
+            .and(f.isAdmin)
+            .and(f.isMuteOneDayCommand)
+    }
+
+    fun hasMuteTwoDaysCommand(): Filter {
+        return f.isTargetChat
+            .and(f.isAdmin)
+            .and(f.isMuteTwoDaysCommand)
+    }
+
+    fun hasUnmuteCommand(): Filter {
+        return f.isTargetChat
+            .and(f.isAdmin)
+            .and(f.isUnmuteCommand)
+    }
+
+    fun hasBanCommand(): Filter {
+        return f.isTargetChat
+            .and(f.isAdmin)
+            .and(f.isBanCommand)
+    }
+
+    fun hasUnbanCommand(): Filter {
+        return f.isTargetChat
+            .and(f.isAdmin)
+            .and(f.isUnbanCommand)
+    }
+
+    fun hasTrustCommand(): Filter {
+        return f.isTargetChat
+            .and(f.isAdmin)
+            .and(f.isTrustCommand)
+    }
+
     fun hasLinks(): Filter {
         return f.isTargetChat
             .and(f.isNotWhitelisted)
@@ -91,10 +170,120 @@ class BotModes(
             .and(f.hasForwardedMessage)
     }
 
+    private fun handleTrustCommand(message: Message) {
+        userRepository.findById(message.replyToMessage!!.from!!.id).ifPresentOrElse({
+            user -> user.trusted = true
+            userRepository.save(user)
+        },
+        {
+            userRepository.save(TGUser(message.replyToMessage!!.from!!.id, 0, true))
+        })
+    }
+
+    private fun handleUnbanCommand(bot: Bot, message: Message) {
+        bot.unbanChatMember(ChatId.fromId(message.chat.id), message.replyToMessage!!.from!!.id)
+    }
+
+    private fun handleBanCommand(bot: Bot, message: Message) {
+        bot.kickChatMember(ChatId.fromId(message.chat.id), message.replyToMessage!!.from!!.id, Instant.MAX.epochSecond)
+    }
+
+    private fun handleUnmuteCommand(bot: Bot, message: Message) {
+        bot.restrictChatMember(ChatId.fromId(message.chat.id), message.replyToMessage!!.from!!.id,
+            ChatPermissions(canSendMessages = true, canSendMediaMessages = true, canSendOtherMessages = true),
+            Instant.MAX.epochSecond)
+    }
+
+    private fun handleMuteTwoDaysCommand(bot: Bot, message: Message) {
+        restrictForTime(bot, message, 172800)
+    }
+
+    private fun handleMuteOneDayCommand(bot: Bot, message: Message) {
+        restrictForTime(bot, message, 86400)
+    }
+
+    private fun handleMuteOneMinuteCommand(bot: Bot, message: Message) {
+        restrictForTime(bot, message, 3600)
+    }
+
+    private fun handleForgiveCommand(bot: Bot, message: Message) {
+        userRepository.findById(message.replyToMessage!!.from!!.id).ifPresent {
+            user -> user.count = 0
+            userRepository.save(user)
+        }
+        bot.sendMessage(
+            ChatId.fromId(message.chat.id),
+            text = String.format("All is forgiven, %s, I love you! (again)", message.replyToMessage!!.from?.firstName ?: "dude")
+        )
+    }
+
+    private fun handleWarnCommand(bot: Bot, message: Message) {
+        var currentCount = 1
+        val targetUserId = message.replyToMessage!!.from!!.id
+        userRepository.findById(targetUserId).ifPresentOrElse({
+            user -> user.count += 1
+            currentCount = user.count
+            userRepository.save(user)
+        },
+        {
+            userRepository.save(TGUser(targetUserId, currentCount, false))
+        })
+        when (currentCount) {
+            1 -> {
+                bot.sendMessage(
+                    ChatId.fromId(message.chat.id),
+                    text = String.format(configuration.firstWarning, message.replyToMessage!!.from?.firstName ?: "dude")
+                )
+            }
+            2 -> {
+                bot.sendMessage(
+                    ChatId.fromId(message.chat.id),
+                    text = String.format(configuration.secondWarning, message.replyToMessage!!.from?.firstName ?: "dude")
+                )
+            }
+            3 -> {
+                bot.sendMessage(
+                    ChatId.fromId(message.chat.id),
+                    text = String.format(configuration.thirdWarning, message.replyToMessage!!.from?.firstName ?: "dude")
+                )
+                bot.kickChatMember(ChatId.fromId(message.chat.id), targetUserId, Instant.MAX.epochSecond)
+            }
+        }
+    }
+
+    private fun handleNextCommand(bot: Bot, message: Message) {
+        bot.sendMessage(
+            ChatId.fromId(message.chat.id),
+            text = String.format("Hey there, %s %s", message.from?.firstName ?: "dude", configuration.nextCommand)
+        )
+    }
+
+    private fun handleWhitelistUser(message: Message) {
+        val userIdToWhitelist = message.forwardFrom?.id ?: 0L
+        userRepository.findById(userIdToWhitelist)
+            .ifPresentOrElse(
+                {
+                    logger.info("User {} already present - ignore insert", userIdToWhitelist)},
+                {
+                    userRepository.save(TGUser(userIdToWhitelist, 0, true))
+                    logger.info("Whitelisted User {}", userIdToWhitelist)
+                }
+            )
+    }
+
     fun handlePromoCommand(bot: Bot, message: Message) {
         bot.sendMessage(
             ChatId.fromId(message.chat.id),
             text = String.format("Hey there, %s %s", message.from?.firstName ?: "dude", configuration.promo)
+        )
+    }
+
+    private fun restrictForTime(bot: Bot, message: Message, time: Long) {
+        logger.info(format("User %s will be restricted for %s seconds", message.replyToMessage!!.from!!.id, time))
+        bot.restrictChatMember(
+            ChatId.fromId(message.chat.id), message.replyToMessage!!.from!!.id,
+            ChatPermissions(canSendMessages = false, canSendMediaMessages = false, canSendOtherMessages = false),
+            Instant.now().epochSecond + time
         )
     }
 

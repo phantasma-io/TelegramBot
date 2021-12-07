@@ -12,6 +12,66 @@ class CustomFilter(
     val userRepository: UserRepository
 ) {
 
+    val isTrustCommand = object : Filter {
+        override fun Message.predicate(): Boolean {
+            return text?.contains("!trust") ?: false
+        }
+    }
+
+    val isForgiveCommand = object : Filter {
+        override fun Message.predicate(): Boolean {
+            return text?.contains("!forgive") ?: false
+        }
+    }
+
+    val isMuteOneMinuteCommand = object : Filter {
+        override fun Message.predicate(): Boolean {
+            return text?.contains("!mute1") ?: false
+        }
+    }
+
+    val isMuteOneDayCommand = object : Filter {
+        override fun Message.predicate(): Boolean {
+            return text?.contains("!mute24") ?: false
+        }
+    }
+
+    val isMuteTwoDaysCommand = object : Filter {
+        override fun Message.predicate(): Boolean {
+            return text?.contains("!mute48") ?: false
+        }
+    }
+
+    val isWarnCommand = object : Filter {
+        override fun Message.predicate(): Boolean {
+            return text?.contains("!warn") ?: false
+        }
+    }
+
+    val isBanCommand = object : Filter {
+        override fun Message.predicate(): Boolean {
+            return text?.contains("!ban") ?: false
+        }
+    }
+
+    val isUnbanCommand = object : Filter {
+        override fun Message.predicate(): Boolean {
+            return text?.contains("!unban") ?: false
+        }
+    }
+
+    val isUnmuteCommand = object : Filter {
+        override fun Message.predicate(): Boolean {
+            return text?.contains("!unmute") ?: false
+        }
+    }
+
+    val isNextCommand = object : Filter {
+        override fun Message.predicate(): Boolean {
+            return text?.contains("#nextcommand") ?: false
+        }
+    }
+
     val isPromoCommand = object : Filter {
         override fun Message.predicate(): Boolean {
             return text?.contains("#promo") ?: false

@@ -2,9 +2,13 @@
   "botToken": "12345",
   "botMimetypes": "audio/mp3,video/mp4,video/mpeg,image/gif",
   "botFilenames": "mp3,mpeg,mp4,gif",
-  "admins": [1],
-  "chatsToWatch": [2, 1],
+  "admins": [0],
+  "chatsToWatch": [0, 1],
   "verificationChat": 1,
-  "methods": ["deleteSpam", "info"],
-  "promo": "Promo"
+  "mode": "admin",
+  "promo": "Promo",
+  "nextCommand": "Nextcommand",
+  "firstWarning": "%s please rethink what you are doing.\nKindly requested 1/3 times.",
+  "secondWarning": "%s please rethink what you are doing or this will not end well.\nKindly requested 2/3 times.",
+  "thirdWarning": "%s was warned 3/3 times - game over, I win!"
 }

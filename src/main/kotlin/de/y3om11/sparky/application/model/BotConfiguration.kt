@@ -6,5 +6,9 @@ data class BotConfiguration(val botToken: String,
                             val admins: List<Long>,
                             val chatsToWatch: List<Long>,
                             val verificationChat: Long,
-                            val methods: List<String>,
-                            val promo: String)
+                            val mode: String,
+                            val promo: String,
+                            val nextCommand: String,
+                            val firstWarning: String,
+                            val secondWarning: String,
+                            val thirdWarning: String)
