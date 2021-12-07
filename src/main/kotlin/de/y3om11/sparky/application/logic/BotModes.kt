@@ -83,89 +83,89 @@ class BotModes(
         }
     }
 
-    fun hasPhoto(): Filter {
+    private fun hasPhoto(): Filter {
         return f.isTargetChat
             .and(f.isNotWhitelisted)
             .and(Filter.Photo)
     }
 
-    fun hasDocument(): Filter {
+    private fun hasDocument(): Filter {
         return f.isTargetChat
             .and(f.isNotWhitelisted)
             .and(f.hasDocument)
     }
 
-    fun hasPromoCommand(): Filter {
+    private fun hasPromoCommand(): Filter {
         return f.isTargetChat
             .and(f.isPromoCommand)
     }
 
-    fun hasNextCommand(): Filter {
+    private fun hasNextCommand(): Filter {
         return f.isTargetChat
             .and(f.isNextCommand)
     }
 
-    fun hasWarnCommand(): Filter {
+    private fun hasWarnCommand(): Filter {
         return f.isTargetChat
             .and(f.isAdmin)
             .and(f.isWarnCommand)
     }
 
-    fun hasForgiveCommand(): Filter {
+    private fun hasForgiveCommand(): Filter {
         return f.isTargetChat
             .and(f.isAdmin)
             .and(f.isForgiveCommand)
     }
 
-    fun hasMuteOneMinuteCommand(): Filter {
+    private fun hasMuteOneMinuteCommand(): Filter {
         return f.isTargetChat
             .and(f.isAdmin)
             .and(f.isMuteOneMinuteCommand)
     }
 
-    fun hasMuteOneDayCommand(): Filter {
+    private fun hasMuteOneDayCommand(): Filter {
         return f.isTargetChat
             .and(f.isAdmin)
             .and(f.isMuteOneDayCommand)
     }
 
-    fun hasMuteTwoDaysCommand(): Filter {
+    private fun hasMuteTwoDaysCommand(): Filter {
         return f.isTargetChat
             .and(f.isAdmin)
             .and(f.isMuteTwoDaysCommand)
     }
 
-    fun hasUnmuteCommand(): Filter {
+    private fun hasUnmuteCommand(): Filter {
         return f.isTargetChat
             .and(f.isAdmin)
             .and(f.isUnmuteCommand)
     }
 
-    fun hasBanCommand(): Filter {
+    private fun hasBanCommand(): Filter {
         return f.isTargetChat
             .and(f.isAdmin)
             .and(f.isBanCommand)
     }
 
-    fun hasUnbanCommand(): Filter {
+    private fun hasUnbanCommand(): Filter {
         return f.isTargetChat
             .and(f.isAdmin)
             .and(f.isUnbanCommand)
     }
 
-    fun hasTrustCommand(): Filter {
+    private fun hasTrustCommand(): Filter {
         return f.isTargetChat
             .and(f.isAdmin)
             .and(f.isTrustCommand)
     }
 
-    fun hasLinks(): Filter {
+    private fun hasLinks(): Filter {
         return f.isTargetChat
             .and(f.isNotWhitelisted)
             .and(f.hasEntities)
     }
 
-    fun forwardedMessageToWhitelist(): Filter {
+    private fun forwardedMessageToWhitelist(): Filter {
         return f.isVerificationChat
             .and(f.hasForwardedMessage)
     }
@@ -271,7 +271,7 @@ class BotModes(
             )
     }
 
-    fun handlePromoCommand(bot: Bot, message: Message) {
+    private fun handlePromoCommand(bot: Bot, message: Message) {
         bot.sendMessage(
             ChatId.fromId(message.chat.id),
             text = String.format("Hey there, %s %s", message.from?.firstName ?: "dude", configuration.promo)
@@ -287,7 +287,7 @@ class BotModes(
         )
     }
 
-    fun handleNotWhitelistedLinks(bot: Bot, message: Message) {
+    private fun handleNotWhitelistedLinks(bot: Bot, message: Message) {
         bot.deleteMessage(ChatId.fromId(message.chat.id), message.messageId)
         message.entities!!.forEach { e ->
             if (e.type.name.contains("link") || e.type.name.contains("url")) {
@@ -298,7 +298,7 @@ class BotModes(
         }
     }
 
-    fun handleNotWhitelistedPhoto(bot: Bot, message: Message) {
+    private fun handleNotWhitelistedPhoto(bot: Bot, message: Message) {
         bot.deleteMessage(ChatId.fromId(message.chat.id), message.messageId)
         val photoHash = message.photo?.stream()
             ?.map { p -> p.width.toString() + p.height.toString() + p.fileSize.toString() }
@@ -308,7 +308,7 @@ class BotModes(
         }
     }
 
-    fun handleNotWhitelistedDocument(bot: Bot, message: Message) {
+    private fun handleNotWhitelistedDocument(bot: Bot, message: Message) {
         bot.deleteMessage(ChatId.fromId(message.chat.id), message.messageId)
         val docHash = (message.document?.fileId
                 + message.document?.fileName
