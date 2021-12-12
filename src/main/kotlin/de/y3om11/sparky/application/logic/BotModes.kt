@@ -3,11 +3,9 @@ package de.y3om11.sparky.application.logic
 import com.github.kotlintelegrambot.Bot
 import com.github.kotlintelegrambot.bot
 import com.github.kotlintelegrambot.dispatch
+import com.github.kotlintelegrambot.dispatcher.callbackQuery
 import com.github.kotlintelegrambot.dispatcher.message
-import com.github.kotlintelegrambot.entities.ChatId
-import com.github.kotlintelegrambot.entities.ChatPermissions
-import com.github.kotlintelegrambot.entities.InlineKeyboardMarkup
-import com.github.kotlintelegrambot.entities.Message
+import com.github.kotlintelegrambot.entities.*
 import com.github.kotlintelegrambot.entities.keyboard.InlineKeyboardButton
 import com.github.kotlintelegrambot.extensions.filters.Filter
 import de.y3om11.sparky.application.model.BotConfiguration
@@ -18,7 +16,6 @@ import java.lang.String.format
 import java.security.MessageDigest
 import java.time.Instant
 import java.util.stream.Collectors
-import kotlin.math.log
 
 @Component
 class BotModes(
@@ -79,6 +76,32 @@ class BotModes(
             }
             message(hasTrustCommand()) {
                 handleTrustCommand(message)
+            }
+            callbackQuery {
+                handleFeedbackCallback(bot, update)
+            }
+        }
+    }
+
+    private fun handleFeedbackCallback(bot: Bot, update: Update) {
+        if(update.message?.chat?.id == configuration.verificationChat){
+            update.callbackQuery?.let {
+                val payload = it.data.split(",")
+                val action = FeedbackAction.valueOf(payload[0])
+                val feedbackId = payload[1].toLong()
+                val feedbackOpt = feedbackRepository.findById(feedbackId)
+                feedbackOpt.ifPresent { feedback ->
+                    if(action == FeedbackAction.BAN){
+                        if(feedback.data.isNotEmpty()){
+                            blacklistRepository.save(Blacklist(hash = feedback.data))
+                        }
+                        bot.kickChatMember(ChatId.fromId(feedback.chatId), feedback.userId, Instant.MAX.epochSecond)
+                    } else if(action == FeedbackAction.WHITELIST){
+                        userRepository.save(TGUser(feedback.userId, 0, true))
+                    }
+                    feedbackRepository.delete(feedback)
+                }
+                it.message?.let { msg -> bot.deleteMessage(ChatId.fromId(configuration.verificationChat), msg.messageId) }
             }
         }
     }
